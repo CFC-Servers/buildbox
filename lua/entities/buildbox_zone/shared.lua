@@ -10,6 +10,8 @@ function ENT:Initialize()
 
 	local mins, maxs = self:GetMins(), self:GetMaxs()
 
+	self:DrawShadow(false)
+
 	if CLIENT then
 		self:SetRenderBounds(mins, maxs)
 	else
@@ -42,9 +44,13 @@ if CLIENT then
 	function ENT:Draw(flags)
 	end
 
-	local mat = Material("models/shadertest/predator")
+	local overlayMaterial = Material("models/shadertest/predator")
 
 	function ENT:DrawTranslucent(flags)
+		if not GetConVar("boxmarker_draw_effects"):GetBool() then
+			return
+		end
+
 		local pos, ang = self:GetPos(), self:GetAngles()
 		local mins, maxs = self:GetMins(), self:GetMaxs()
 
@@ -66,21 +72,26 @@ if CLIENT then
 
 		render.SetStencilCompareFunction(STENCIL_ALWAYS)
 
-		render.OverrideColorWriteEnable(true, false)
-			render.SetColorMaterial()
-			render.DrawBox(pos, ang, mins, maxs, color_white)
-		render.OverrideColorWriteEnable(false)
+		local color = Color(
+			GetConVar("boxmarker_tint_red"):GetInt(),
+			GetConVar("boxmarker_tint_green"):GetInt(),
+			GetConVar("boxmarker_tint_blue"):GetInt(),
+			GetConVar("boxmarker_tint_alpha"):GetInt()
+		)
+
+		render.SetColorMaterial()
+		render.DrawBox(pos, ang, mins, maxs, color)
 
 		render.SetStencilCompareFunction(STENCIL_EQUAL)
 
 		render.UpdateRefractTexture()
-		render.SetMaterial(mat)
+		render.SetMaterial(overlayMaterial)
 
-		mat:SetFloat("$refractamount", 0.01)
+		overlayMaterial:SetFloat("$refractamount", 0.01)
 
 		render.DrawScreenQuad()
 
-		mat:SetFloat("$refractamount", 1)
+		overlayMaterial:SetFloat("$refractamount", 1)
 
 		render.SetStencilEnable(false)
 	end
@@ -147,11 +158,6 @@ else
 				return
 			end
 
-			if ent:CreatedByMap() then
-				print(ent)
-				print(debug.traceback())
-			end
-
 			ent:SetPreventTransmit(ply, not should)
 
 			if claim != nil then
@@ -201,6 +207,8 @@ else
 	end
 
 	function ENT:CapturePlayer(ply)
+		ply.BuildBox = self
+
 		for _, v in ents.Iterator() do
 			if not self:IsValidEntity(v) then
 				continue
@@ -211,6 +219,8 @@ else
 	end
 
 	function ENT:ReleasePlayer(ply)
+		ply.BuildBox = nil
+
 		for _, v in ents.Iterator() do
 			if not self:IsValidEntity(v) then
 				continue
@@ -258,4 +268,20 @@ else
 			self:ReleaseEntity(ent)
 		end
 	end
+end
+
+if SERVER then
+	hook.Add("PlayerInitialSpawn", "buildbox", function(ply)
+		timer.Simple(0, function()
+			if not IsValid(ply) or ply.BuildBox then
+				return
+			end
+
+			for _, ent in ents.Iterator() do
+				if ent.BuildBox then
+					ent:SetPreventTransmit(ply, true)
+				end
+			end
+		end)
+	end)
 end
