@@ -163,10 +163,6 @@ end
 function TOOL:DrawHUD()
 end
 
-function TOOL:IsActive()
-	return self:GetClientBool("active", false)
-end
-
 function TOOL:GetBounds()
 	local mins, maxs = Vector(), Vector()
 
