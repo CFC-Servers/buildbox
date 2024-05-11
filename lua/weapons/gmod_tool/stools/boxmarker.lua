@@ -48,10 +48,10 @@ function TOOL:LeftClick(trace)
 	if SERVER then
 		if game.SinglePlayer() then
 			self:GetWeapon():CallOnClient("PrimaryAttack")
+		end
 
-			if self:GetStage() == 0 then
-				self:SetStage(1)
-			end
+		if self:GetStage() == 0 then
+			self:SetStage(1)
 		end
 
 		return true
