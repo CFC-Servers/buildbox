@@ -5,6 +5,17 @@ ENT.Base = "base_anim"
 
 ENT.WantsTranslucency = true
 
+ENT.ClassBlacklist = {
+	["buildbox_zone"] = true,
+	["quad_prop"] = true,
+	["starfall_hologram"] = true,
+	["starfall_hud"] = true,
+	["starfall_processor"] = true,
+	["starfall_prop"] = true,
+	["starfall_screen"] = true,
+	["starfall_cnextbot"] = true
+}
+
 function ENT:Initialize()
 	self:SetModel("models/hunter/blocks/cube05x05x05.mdl")
 
@@ -97,11 +108,7 @@ if CLIENT then
 	end
 else
 	function ENT:IsValidEntity(ent)
-		if ent:EntIndex() == 0 or ent:GetClass() == self:GetClass() then
-			return false
-		end
-
-		if ent:CreatedByMap() then
+		if ent:EntIndex() == 0 or ent:CreatedByMap() then
 			return false
 		end
 
@@ -110,6 +117,10 @@ else
 		end
 
 		if IsValid(ent.BuildBox) and ent.BuildBox != self then
+			return false
+		end
+
+		if self.ClassBlacklist[ent:GetClass()] then
 			return false
 		end
 
