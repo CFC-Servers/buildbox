@@ -143,12 +143,17 @@ else
 
 	function ENT:GetEntityHierarchy(ent)
 		local entities = {ent}
+		local iterate
 
-		for _, v in ents.Iterator() do
-			if self:GetTopLevelEntity(v) == ent then
-				entities[#entities + 1] = v
+		iterate = function(parent)
+			for _, child in pairs(parent:GetChildren()) do
+				entities[#entities + 1] = child
+
+				iterate(child)
 			end
 		end
+
+		iterate(ent)
 
 		return entities
 	end
